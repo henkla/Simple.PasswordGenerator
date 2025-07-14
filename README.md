@@ -12,7 +12,7 @@
 ## 🚀 Overview
 
 **Simple.PasswordGenerator** is a lightweight, secure password generator for .NET applications.  
-It creates cryptographically strong passwords based on customizable policies — including length, required character types, and special characters.
+It creates cryptographically strong passwords based on customizable policies — including length, required character types, special characters, and the ability to exclude ambiguous characters for better readability.
 
 No dependencies beyond .NET. Simple to integrate, flexible to configure, and safe to use.
 
@@ -21,9 +21,11 @@ No dependencies beyond .NET. Simple to integrate, flexible to configure, and saf
 ## 🔑 Key Features
 
 - 🔐 Cryptographically secure password generation
-- ⚙️ Fully customizable policies (length, uppercase, lowercase, digits, special chars)
+- ⚙️ Fully customizable policies (length, uppercase, lowercase, digits, special chars, ambiguous character exclusion)
 - 🎯 Default policy with sensible security defaults
 - 🔄 Supports configuration via lambda or predefined policy objects
+- 🧩 Provides password strength estimation including entropy calculation
+- 🔀 Uses Fisher–Yates shuffle for password character randomization
 - 🧩 Compatible with .NET 8 and later
 
 ---
@@ -31,9 +33,10 @@ No dependencies beyond .NET. Simple to integrate, flexible to configure, and saf
 ## 📚 Table of Contents
 
 1. [Getting Started](#getting-started)
-    - [Installing](#installing)
-    - [Basic Usage](#basic-usage)
-    - [Advanced Usage](#advanced-usage)
+   - [Installing](#installing)
+   - [Basic Usage](#basic-usage)
+   - [Advanced Usage](#advanced-usage)
+   - [Generating Password with Strength Info](#generating-password-with-strength-info)
 2. [Examples](#examples)
 3. [Technical Information](#technical-information)
 4. [Known Issues & Limitations](#known-issues--limitations)
@@ -78,6 +81,7 @@ var password = generator.Generate(policy =>
     policy.RequireDigit = true;
     policy.RequireUppercase = true;
     policy.RequireLowercase = true;
+    policy.ExcludeAmbiguousCharacters = true;
 });
 ```
 
@@ -91,9 +95,32 @@ var policy = new PasswordPolicy
     RequireDigit = true,
     RequireUppercase = false,
     RequireLowercase = true,
-    SpecialCharacters = "@#$"
+    SpecialCharacters = "@#$",
+    ExcludeAmbiguousCharacters = true,
+    AmbiguousCharacters = "O0Il1"
 };
 var passwordFromPolicy = generator.Generate(policy);
+```
+
+---
+
+### 📊 Generating Password with Strength Info
+
+You can generate a password and receive detailed strength information including entropy and strength category:
+
+```csharp
+var strengthResult = generator.GenerateWithStrength(policy =>
+{
+    policy.Length = 16;
+    policy.RequireUppercase = true;
+    policy.RequireLowercase = true;
+    policy.RequireDigit = true;
+    policy.RequireSpecial = true;
+});
+
+Console.WriteLine($"Password: {strengthResult.Password}");
+Console.WriteLine($"Entropy (bits): {strengthResult.EntropyBits}");
+Console.WriteLine($"Strength: {strengthResult.Strength}");
 ```
 
 ---
@@ -117,6 +144,7 @@ var customPassword = passwordGenerator.Generate(policy =>
     policy.RequireDigit = true;
     policy.RequireUppercase = true;
     policy.RequireLowercase = true;
+    policy.ExcludeAmbiguousCharacters = true;
 });
 Console.WriteLine($"Custom policy password: {customPassword}");
 
@@ -128,26 +156,43 @@ var policyInstance = new PasswordPolicy
     RequireDigit = true,
     RequireUppercase = false,
     RequireLowercase = true,
-    SpecialCharacters = "@#$"
+    SpecialCharacters = "@#$",
+    ExcludeAmbiguousCharacters = true,
+    AmbiguousCharacters = "O0Il1"
 };
 var policyPassword = passwordGenerator.Generate(policyInstance);
 Console.WriteLine($"Password from policy instance: {policyPassword}");
+
+// Generate password with strength info
+var strengthResult = passwordGenerator.GenerateWithStrength(policy =>
+{
+    policy.Length = 16;
+    policy.RequireUppercase = true;
+    policy.RequireLowercase = true;
+    policy.RequireDigit = true;
+    policy.RequireSpecial = true;
+});
+Console.WriteLine($"Password: {strengthResult.Password}");
+Console.WriteLine($"Entropy (bits): {strengthResult.EntropyBits}");
+Console.WriteLine($"Strength: {strengthResult.Strength}");
 ```
 
 ---
 
 ## 🔬 Technical Information
 
-- Uses `System.Security.Cryptography.RandomNumberGenerator` for secure randomization
-- Password policy validation ensures minimum length and at least one character from required categories
-- Character categories: uppercase, lowercase, digits, and customizable special characters
-- Password characters shuffled with Fisher–Yates algorithm for unpredictability
+- Uses `System.Security.Cryptography.RandomNumberGenerator` for cryptographically secure randomization
+- Password policy validation ensures minimum length and required character types
+- Supports exclusion of ambiguous characters (e.g., 'O', '0', 'I', 'l', '1') to improve password readability
+- Character categories: uppercase, lowercase, digits, special characters, and additional custom characters
+- Password characters are shuffled with the Fisher–Yates algorithm for unpredictability
+- Provides entropy calculation and password strength classification based on entropy
 
 ---
 
 ## 🐞 Known Issues & Limitations
 
-- Does not support password strength estimation or entropy reporting
+- No known issues at this time
 
 ---
 

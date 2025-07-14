@@ -232,4 +232,87 @@ public class PasswordGeneratorTests
         // Check that at least one character from AdditionalCharacters is present (statistically very likely with length 100)
         result.Any(c => additionalChars.Contains(c)).ShouldBeTrue();
     }
+
+    [Fact]
+    public void GenerateWithStrength_ReturnsPasswordAndStrengthInfo()
+    {
+        var subjectUnderTest = new PasswordGenerator();
+
+        var result = subjectUnderTest.GenerateWithStrength(policy =>
+        {
+            policy.Length = 20;
+            policy.RequireDigit = true;
+            policy.RequireLowercase = true;
+            policy.RequireUppercase = true;
+            policy.RequireSpecial = true;
+            policy.SpecialCharacters = "!@#";
+            policy.ExcludeAmbiguousCharacters = true;
+        });
+
+        result.ShouldNotBeNull();
+        result.Password.ShouldNotBeNullOrEmpty();
+        result.Password.Length.ShouldBe(20);
+
+        // Entropy bits should be a positive number (entropy is calculated)
+        result.EntropyBits.ShouldBeGreaterThan(0);
+    }
+
+    [Fact]
+    public void GenerateWithStrength_WhenPolicyInvalid_ThrowsException()
+    {
+        var subjectUnderTest = new PasswordGenerator();
+
+        var exception = Should.Throw<PasswordGeneratorException>(() =>
+        {
+            // Invalid policy length below minimum
+            subjectUnderTest.GenerateWithStrength(policy => { policy.Length = 5; });
+        });
+
+        exception.Message.ShouldBe("Password must be at least 12 characters.");
+    }
+
+    [Fact]
+    public void GenerateWithStrength_IncludesAdditionalCharacters()
+    {
+        var subjectUnderTest = new PasswordGenerator();
+
+        var additionalChars = "åäöüß";
+
+        var result = subjectUnderTest.GenerateWithStrength(policy =>
+        {
+            policy.Length = 30;
+            policy.RequireDigit = false;
+            policy.RequireLowercase = false;
+            policy.RequireUppercase = false;
+            policy.RequireSpecial = false;
+            policy.AdditionalCharacters = additionalChars;
+        });
+
+        result.Password.ShouldNotBeNullOrEmpty();
+        result.Password.All(c => additionalChars.Contains(c)).ShouldBeTrue();
+        result.EntropyBits.ShouldBeGreaterThan(0);
+    }
+
+    [Fact]
+    public void GenerateWithStrength_ContainsAllRequiredCharacterTypes()
+    {
+        var subjectUnderTest = new PasswordGenerator();
+
+        var result = subjectUnderTest.GenerateWithStrength(policy =>
+        {
+            policy.Length = 40;
+            policy.RequireDigit = true;
+            policy.RequireLowercase = true;
+            policy.RequireUppercase = true;
+            policy.RequireSpecial = true;
+            policy.SpecialCharacters = "!@#";
+        });
+
+        var pwd = result.Password;
+
+        pwd.Any(char.IsDigit).ShouldBeTrue();
+        pwd.Any(char.IsLower).ShouldBeTrue();
+        pwd.Any(char.IsUpper).ShouldBeTrue();
+        pwd.Any(c => "!@#".Contains(c)).ShouldBeTrue();
+    }
 }

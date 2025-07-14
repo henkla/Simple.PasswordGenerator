@@ -9,6 +9,7 @@ public interface IPasswordGenerator
 {
     string Generate(Action<PasswordPolicy>? policyConfiguration = null);
     string Generate(PasswordPolicy policyConfiguration);
+    PasswordStrengthResult GenerateWithStrength(Action<PasswordPolicy>? policyConfiguration = null);
 }
 
 /// <summary>
@@ -97,7 +98,7 @@ public class PasswordGenerator : IPasswordGenerator
         }
         catch (Exception e) when (e is not PasswordGeneratorException)
         {
-            throw new PasswordGeneratorException("An error occured while generating password. See inner exception for further details.", e);
+            throw new PasswordGeneratorException("An error occurred while generating password. See inner exception for further details.", e);
         }
     }
 
@@ -117,6 +118,80 @@ public class PasswordGenerator : IPasswordGenerator
             config.AmbiguousCharacters = policyConfiguration.AmbiguousCharacters;
             config.AdditionalCharacters = policyConfiguration.AdditionalCharacters;
         });
+    }
+
+    /// <summary>
+    /// Generates a password based on an optional policy configuration and evaluates its strength.
+    /// Calculates password entropy using the size of the character set and password length,
+    /// then categorizes the password strength from VeryWeak to VeryStrong based on entropy thresholds.
+    /// Returns the generated password along with its entropy value and strength rating.
+    /// Throws a PasswordGeneratorException if no valid characters are available or if an error occurs.
+    /// </summary>
+    public PasswordStrengthResult GenerateWithStrength(Action<PasswordPolicy>? policyConfiguration = null)
+    {
+        try
+        {
+            var policy = new PasswordPolicy();
+            policyConfiguration?.Invoke(policy);
+            policy.Validate();
+
+            var password = Generate(policy);
+            var charsetSize = 0;
+
+            if (policy.RequireUppercase)
+            {
+                charsetSize += FilterAmbiguous(UpperCaseSeed, policy).Length;
+            }
+
+            if (policy.RequireLowercase)
+            {
+                charsetSize += FilterAmbiguous(LowerCaseSeed, policy).Length;
+            }
+
+            if (policy.RequireDigit)
+            {
+                charsetSize += FilterAmbiguous(DigitSeed, policy).Length;
+            }
+
+            if (policy.RequireSpecial)
+            {
+                charsetSize += FilterAmbiguous(policy.SpecialCharacters, policy).Length;
+            }
+
+            if (!string.IsNullOrEmpty(policy.AdditionalCharacters))
+            {
+                charsetSize += FilterAmbiguous(policy.AdditionalCharacters, policy).Length;
+            }
+
+            if (charsetSize == 0)
+            {
+                throw new PasswordGeneratorException("No valid characters available for password generation.");
+            }
+
+            // Entropy = length * log2(charsetSize)
+            var entropy = password.Length * Math.Log2(charsetSize);
+
+            // Determine strength based on entropy (can be adjusted as needed)
+            var strength = entropy switch
+            {
+                < 28 => PasswordStrength.VeryWeak,
+                < 36 => PasswordStrength.Weak,
+                < 60 => PasswordStrength.Moderate,
+                < 128 => PasswordStrength.Strong,
+                _ => PasswordStrength.VeryStrong
+            };
+
+            return new PasswordStrengthResult
+            {
+                Password = password,
+                EntropyBits = entropy,
+                Strength = strength
+            };
+        }
+        catch (Exception e) when (e is not PasswordGeneratorException)
+        {
+            throw new PasswordGeneratorException("An error occurred while generating password. See inner exception for further details.", e);
+        }
     }
 
     private static char GetRandomChar(string chars)
