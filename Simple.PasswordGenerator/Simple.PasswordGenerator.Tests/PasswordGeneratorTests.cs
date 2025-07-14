@@ -118,7 +118,7 @@ public class PasswordGeneratorTests
             });
         });
 
-        exception.Message.ShouldBe("No valid characters available for password generation.");
+        exception.Message.ShouldBe("At least one character type or additional characters must be allowed.");
     }
 
     [Fact]

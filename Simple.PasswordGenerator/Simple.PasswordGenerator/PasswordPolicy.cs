@@ -64,15 +64,44 @@ public class PasswordPolicy
     public string AdditionalCharacters { get; set; } = string.Empty;
     
     /// <summary>
-    /// Validates the current policy settings.
-    /// Throws an exception if the policy is invalid.
+    /// Validates the current password policy settings to ensure they are consistent and secure.
+    /// Throws a <see cref="PasswordGeneratorException"/> if any of the following conditions are met:
+    /// <list type="bullet">
+    /// <item><description>The password length is less than 12 characters.</description></item>
+    /// <item><description>No character types (uppercase, lowercase, digit, special) are enabled and no additional characters are defined.</description></item>
+    /// <item><description>Special characters are required, but no special characters are defined.</description></item>
+    /// <item><description>Ambiguous characters are to be excluded, but none are defined.</description></item>
+    /// <item><description>The password length is shorter than the number of required character types.</description></item>
+    /// </list>
     /// </summary>
-    /// <exception cref="PasswordGeneratorException">
-    /// Thrown if the password length is less than 12 characters.
-    /// </exception>
     public void Validate()
     {
         if (Length < 12)
+        {
             throw new PasswordGeneratorException("Password must be at least 12 characters.");
+        }
+
+        if (!RequireUppercase && !RequireLowercase && !RequireDigit && !RequireSpecial && string.IsNullOrEmpty(AdditionalCharacters))
+        {
+            throw new PasswordGeneratorException("At least one character type or additional characters must be allowed.");
+        }
+
+        if (RequireSpecial && string.IsNullOrEmpty(SpecialCharacters))
+        {
+            throw new PasswordGeneratorException("Special characters are required, but none are defined.");
+        }
+
+        if (ExcludeAmbiguousCharacters && string.IsNullOrEmpty(AmbiguousCharacters))
+        {
+            throw new PasswordGeneratorException("Ambiguous characters must be defined when exclusion is enabled.");
+        }
+
+        var requiredTypes = new[] { RequireUppercase, RequireLowercase, RequireDigit, RequireSpecial }
+            .Count(req => req);
+
+        if (Length < requiredTypes)
+        {
+            throw new PasswordGeneratorException("Password length is too short to meet all required character types.");
+        }
     }
 }
