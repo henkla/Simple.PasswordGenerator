@@ -3,19 +3,30 @@ namespace Simple.PasswordGenerator.Tests;
 public class PasswordGeneratorExceptionTests
 {
     [Fact]
-    public void Constructor_SetsMessage()
+    public void Constructor_WhenMessageIsProvided_SetsMessage()
     {
-        var ex = new PasswordGeneratorException("Test message");
-        Assert.Equal("Test message", ex.Message);
+        // arrange & act
+        
+        var subjectUnderTest = new PasswordGeneratorException("Test message");
+        
+        // assert
+        
+        subjectUnderTest.Message.ShouldBe("Test message");
     }
 
     [Fact]
     public void Constructor_WithInnerException_SetsMessageAndInner()
     {
+        // arrange
+        
         var inner = new InvalidOperationException("Inner");
-        var ex = new PasswordGeneratorException("Outer", inner);
+        
+        // act
+        
+        var subjectUnderTest = new PasswordGeneratorException("Outer", inner);
 
-        Assert.Equal("Outer", ex.Message);
-        Assert.Equal(inner, ex.InnerException);
+        // assert
+        subjectUnderTest.Message.ShouldBe("Outer");
+        subjectUnderTest.InnerException.ShouldBeSameAs(inner);
     }
 }

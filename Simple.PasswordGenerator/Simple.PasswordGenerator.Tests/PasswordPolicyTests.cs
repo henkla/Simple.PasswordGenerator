@@ -3,17 +3,24 @@ namespace Simple.PasswordGenerator.Tests;
 public class PasswordPolicyTests
 {
     [Fact]
-    public void Validate_ThrowsIfLengthIsLessThan12()
+    public void Validate_LengthIsLessThan12_ShouldThrow()
     {
-        var policy = new PasswordPolicy { Length = 11 };
-        var ex = Assert.Throws<PasswordGeneratorException>(() => policy.Validate());
-        Assert.Equal("Password must be at least 12 characters.", ex.Message);
+        // arrange
+
+        var subjectUnderTest = new PasswordPolicy { Length = 11 };
+
+        // act & assert
+
+        var result = Should.Throw<PasswordGeneratorException>(() => subjectUnderTest.Validate());
+        result.Message.ShouldBe("Password must be at least 12 characters.");
     }
 
     [Fact]
-    public void Validate_ThrowsIfNoCharacterTypesOrAdditionalCharacters()
+    public void Validate_WhenNoCharacterTypesOrAdditionalCharacters_ShouldThrow()
     {
-        var policy = new PasswordPolicy
+        // arrange
+
+        var subjectUnderTest = new PasswordPolicy
         {
             RequireUppercase = false,
             RequireLowercase = false,
@@ -21,56 +28,73 @@ public class PasswordPolicyTests
             RequireSpecial = false,
             AdditionalCharacters = ""
         };
-        var ex = Assert.Throws<PasswordGeneratorException>(() => policy.Validate());
-        Assert.Equal("At least one character type or additional characters must be allowed.", ex.Message);
+
+        // act & assert
+
+        var result = Should.Throw<PasswordGeneratorException>(() => subjectUnderTest.Validate());
+        result.Message.ShouldBe("At least one character type or additional characters must be allowed.");
     }
 
     [Fact]
-    public void Validate_ThrowsIfRequireSpecialIsTrueButNoSpecialCharactersDefined()
+    public void Validate_WhenRequireSpecialIsTrueButNoSpecialCharactersDefined_ShouldThrow()
     {
-        var policy = new PasswordPolicy
+        // arrange
+
+        var subjectUnderTest = new PasswordPolicy
         {
             RequireSpecial = true,
             SpecialCharacters = ""
         };
-        var ex = Assert.Throws<PasswordGeneratorException>(() => policy.Validate());
-        Assert.Equal("Special characters are required, but none are defined.", ex.Message);
+
+        // act & assert
+
+        var result = Should.Throw<PasswordGeneratorException>(() => subjectUnderTest.Validate());
+        result.Message.ShouldBe("Special characters are required, but none are defined.");
     }
 
     [Fact]
-    public void Validate_ThrowsIfExcludingAmbiguousCharactersButNoneAreDefined()
+    public void Validate_WhenExcludingAmbiguousCharactersButNoneAreDefined_ShouldThrow()
     {
-        var policy = new PasswordPolicy
+        // arrange
+
+        var subjectUnderTest = new PasswordPolicy
         {
             ExcludeAmbiguousCharacters = true,
             AmbiguousCharacters = ""
         };
-        var ex = Assert.Throws<PasswordGeneratorException>(() => policy.Validate());
-        Assert.Equal("Ambiguous characters must be defined when exclusion is enabled.", ex.Message);
+
+        // act & assert
+
+        var result = Should.Throw<PasswordGeneratorException>(() => subjectUnderTest.Validate());
+        result.Message.ShouldBe("Ambiguous characters must be defined when exclusion is enabled.");
     }
 
     [Fact]
-    public void Validate_ThrowsIfLengthIsTooShortForRequiredCharacterTypes()
+    public void Validate_WhenLengthIsTooShortForRequiredCharacterTypes_ShouldThrow()
     {
-        var policy = new PasswordPolicy
+        // arrange
+
+        var subjectUnderTest = new PasswordPolicy
         {
-            Length = 3, // >= 12 inte uppfyllt – justera till >= 12 först
+            Length = 3,
             RequireUppercase = true,
             RequireLowercase = true,
             RequireDigit = true,
             RequireSpecial = true
         };
 
-        policy.Length = 3; // ger exception "Password must be at least 12 characters."
-
-        var ex = Assert.Throws<PasswordGeneratorException>(() => policy.Validate());
-        Assert.Equal("Password must be at least 12 characters.", ex.Message);
+        // act & assert
+        
+        var result = Should.Throw<PasswordGeneratorException>(() => subjectUnderTest.Validate());
+        result.Message.ShouldBe("Password must be at least 12 characters.");
     }
 
     [Fact]
-    public void Validate_DoesNotThrowForValidPolicy()
+    public void Validate_WhenPolicyIsValid_DoesNotThrow()
     {
-        var policy = new PasswordPolicy
+        // arrange
+        
+        var subjectUnderTest = new PasswordPolicy
         {
             Length = 16,
             RequireUppercase = true,
@@ -81,14 +105,17 @@ public class PasswordPolicyTests
             AmbiguousCharacters = "1lI0O"
         };
 
-        var exception = Record.Exception(() => policy.Validate());
-        Assert.Null(exception);
+        // act & assert
+        
+        Should.NotThrow(() => subjectUnderTest.Validate());
     }
 
     [Fact]
-    public void Validate_AllowsOnlyAdditionalCharacters()
+    public void Validate_WhenOnlyAdditionalCharactersProvided_ShouldNotThrow()
     {
-        var policy = new PasswordPolicy
+        // arrange
+        
+        var subjectUnderTest = new PasswordPolicy
         {
             Length = 12,
             RequireUppercase = false,
@@ -98,7 +125,8 @@ public class PasswordPolicyTests
             AdditionalCharacters = "ABC"
         };
 
-        var exception = Record.Exception(() => policy.Validate());
-        Assert.Null(exception);
+        // act & assert
+        
+        Should.NotThrow(() => subjectUnderTest.Validate());
     }
 }

@@ -1,5 +1,3 @@
-using Shouldly;
-
 namespace Simple.PasswordGenerator.Tests;
 
 public class PasswordGeneratorTests
@@ -7,9 +5,16 @@ public class PasswordGeneratorTests
     [Fact]
     public void Generate_WhenPolicyIsDefault_GeneratesValidPassword()
     {
+        // arrange
+        
         var subjectUnderTest = new PasswordGenerator();
+        
+        // act
+        
         var result = subjectUnderTest.Generate();
 
+        // assert
+        
         result.ShouldNotBeNull();
         result.ShouldNotBeEmpty();
         result.Length.ShouldBe(16);
@@ -18,14 +23,20 @@ public class PasswordGeneratorTests
     [Fact]
     public void Generate_WhenPolicyIsPassedAsObject_GeneratesValidPassword()
     {
+        // arrange
+        
         var subjectUnderTest = new PasswordGenerator();
         var policy = new PasswordPolicy
         {
             Length = 32
         };
 
+        // act
+        
         var result = subjectUnderTest.Generate(policy);
 
+        // assert
+        
         result.ShouldNotBeNull();
         result.ShouldNotBeEmpty();
         result.Length.ShouldBe(policy.Length);
@@ -34,8 +45,12 @@ public class PasswordGeneratorTests
     [Fact]
     public void Generate_WhenPolicyIsDefined_GeneratesValidPassword()
     {
+        // arrange
+        
         var subjectUnderTest = new PasswordGenerator();
 
+        // act
+        
         var result = subjectUnderTest.Generate(policy =>
         {
             policy.RequireDigit = true;
@@ -45,6 +60,8 @@ public class PasswordGeneratorTests
             policy.Length = 128;
         });
 
+        // assert
+        
         result.ShouldNotBeNull();
         result.ShouldNotBeEmpty();
         result.All(char.IsDigit).ShouldBeTrue();
@@ -54,21 +71,28 @@ public class PasswordGeneratorTests
     [Fact]
     public void Generate_WhenPolicyDefineLengthBelowMinimum_GenerateThrowsException()
     {
+        // arrange
+        
         var subjectUnderTest = new PasswordGenerator();
 
+        // act & assert
+        
         var exception = Should.Throw<PasswordGeneratorException>(() => { subjectUnderTest.Generate(policy => { policy.Length = 11; }); });
-
         exception.Message.ShouldBe("Password must be at least 12 characters.");
     }
 
     [Fact]
     public void Generate_WhenExcludingAmbiguousCharacters_DoesNotContainAmbiguousCharacters()
     {
+        // arrange
+        
         var subjectUnderTest = new PasswordGenerator();
 
+        // act
+        
         var result = subjectUnderTest.Generate(policy =>
         {
-            policy.Length = 64;
+            policy.Length = 1024;
             policy.ExcludeAmbiguousCharacters = true;
             policy.RequireDigit = true;
             policy.RequireLowercase = true;
@@ -76,19 +100,24 @@ public class PasswordGeneratorTests
             policy.RequireSpecial = false;
         });
 
+        // assert
+        
         var ambiguousChars = new PasswordPolicy().AmbiguousCharacters.ToCharArray();
-
         result.Any(c => ambiguousChars.Contains(c)).ShouldBeFalse();
     }
 
     [Fact]
     public void Generate_WhenAllCharacterTypesRequired_ContainsAllCharacterTypes()
     {
+        // arrange
+        
         var subjectUnderTest = new PasswordGenerator();
 
+        // act
+        
         var result = subjectUnderTest.Generate(policy =>
         {
-            policy.Length = 32;
+            policy.Length = 256;
             policy.RequireDigit = true;
             policy.RequireLowercase = true;
             policy.RequireUppercase = true;
@@ -96,6 +125,8 @@ public class PasswordGeneratorTests
             policy.SpecialCharacters = "!@#";
         });
 
+        // assert
+        
         result.Any(char.IsLower).ShouldBeTrue();
         result.Any(char.IsUpper).ShouldBeTrue();
         result.Any(char.IsDigit).ShouldBeTrue();
@@ -105,8 +136,12 @@ public class PasswordGeneratorTests
     [Fact]
     public void Generate_WhenNoCharacterTypesEnabled_ThrowsException()
     {
+        // arrange
+        
         var subjectUnderTest = new PasswordGenerator();
 
+        // act & assert
+        
         var exception = Should.Throw<PasswordGeneratorException>(() =>
         {
             subjectUnderTest.Generate(policy =>
@@ -124,10 +159,13 @@ public class PasswordGeneratorTests
     [Fact]
     public void Generate_WhenCustomSpecialCharactersUsed_PasswordOnlyContainsThose()
     {
+        // arrange
+        
         var subjectUnderTest = new PasswordGenerator();
+        const string allowed = "*+-";
 
-        var allowed = "*+-";
-
+        // act
+        
         var result = subjectUnderTest.Generate(policy =>
         {
             policy.Length = 20;
@@ -138,17 +176,23 @@ public class PasswordGeneratorTests
             policy.SpecialCharacters = allowed;
         });
 
+        // assert
+        
         result.All(c => allowed.Contains(c)).ShouldBeTrue();
     }
 
     [Fact]
     public void Generate_WhenAmbiguousCharactersIncluded_CanContainAmbiguousCharacters()
     {
+        // arrange
+        
         var subjectUnderTest = new PasswordGenerator();
 
+        // act
+        
         var result = subjectUnderTest.Generate(policy =>
         {
-            policy.Length = 50;
+            policy.Length = 1024;
             policy.ExcludeAmbiguousCharacters = false;
             policy.RequireDigit = true;
             policy.RequireLowercase = true;
@@ -156,16 +200,21 @@ public class PasswordGeneratorTests
             policy.RequireSpecial = false;
         });
 
-        result.Any(c => "0O1lI".Contains(c)).ShouldBeTrue(); // Not guaranteed, but statistically very likely with 50 chars
+        // assert
+        
+        result.Any(c => "0O1lI".Contains(c)).ShouldBeTrue(); // Not guaranteed, but statistically very likely with 1024 chars
     }
 
     [Fact]
     public void Generate_WhenAdditionalCharactersProvided_IncludesAdditionalCharacters()
     {
+        // arrange
+        
         var subjectUnderTest = new PasswordGenerator();
+        const string additionalChars = "åäöüß";
 
-        var additionalChars = "åäöüß";
-
+        // act
+        
         var result = subjectUnderTest.Generate(policy =>
         {
             policy.Length = 64;
@@ -176,19 +225,23 @@ public class PasswordGeneratorTests
             policy.AdditionalCharacters = additionalChars;
         });
 
-        // All characters should be from the additionalChars (since no others are required)
-        result.All(c => additionalChars.Contains(c)).ShouldBeTrue();
+        // assert
+        
+        result.All(c => additionalChars.Contains(c)).ShouldBeTrue(); // All characters should be from the additionalChars (since no others are required)
+
     }
 
     [Fact]
     public void Generate_WhenExcludeAmbiguousCharacters_ExcludesAmbiguousFromAdditionalCharacters()
     {
+        // arrange
+        
         var subjectUnderTest = new PasswordGenerator();
-
         var ambiguous = new PasswordPolicy().AmbiguousCharacters;
-        // Include ambiguous chars in AdditionalCharacters for test
-        var additionalChars = "abc" + ambiguous;
+        var additionalChars = "abc" + ambiguous; // Include ambiguous chars in AdditionalCharacters for test
 
+        // act
+        
         var result = subjectUnderTest.Generate(policy =>
         {
             policy.Length = 50;
@@ -200,23 +253,25 @@ public class PasswordGeneratorTests
             policy.ExcludeAmbiguousCharacters = true;
         });
 
-        // None of the ambiguous characters should be present
-        result.Any(c => ambiguous.Contains(c)).ShouldBeFalse();
-
-        // All characters should be from the non-ambiguous subset of additionalChars
-        result.All(c => "abc".Contains(c)).ShouldBeTrue();
+        // assert
+        
+        result.Any(c => ambiguous.Contains(c)).ShouldBeFalse(); // None of the ambiguous characters should be present
+        result.All(c => "abc".Contains(c)).ShouldBeTrue(); // All characters should be from the non-ambiguous subset of additionalChars
     }
 
     [Fact]
     public void Generate_WhenAdditionalCharactersUsedWithOtherRequirements_IncludesAdditionalCharacters()
     {
+        // arrange
+        
         var subjectUnderTest = new PasswordGenerator();
+        const string additionalChars = "çéñ";
 
-        var additionalChars = "çéñ";
-
+        // act
+        
         var result = subjectUnderTest.Generate(policy =>
         {
-            policy.Length = 100;
+            policy.Length = 1024;
             policy.RequireDigit = true;
             policy.RequireLowercase = true;
             policy.RequireUppercase = true;
@@ -224,20 +279,26 @@ public class PasswordGeneratorTests
             policy.AdditionalCharacters = additionalChars;
         });
 
+        // assert 
+        
         // Should contain at least one digit, lowercase, uppercase, and possibly additional characters
         result.Any(char.IsDigit).ShouldBeTrue();
         result.Any(char.IsLower).ShouldBeTrue();
         result.Any(char.IsUpper).ShouldBeTrue();
 
-        // Check that at least one character from AdditionalCharacters is present (statistically very likely with length 100)
+        // Check that at least one character from AdditionalCharacters is present (statistically very likely with length 1024)
         result.Any(c => additionalChars.Contains(c)).ShouldBeTrue();
     }
 
     [Fact]
-    public void GenerateWithStrength_ReturnsPasswordAndStrengthInfo()
+    public void GenerateWithStrength_WhenPolicyIsValid_ReturnsPasswordAndStrengthInfo()
     {
+        // arrange
+        
         var subjectUnderTest = new PasswordGenerator();
 
+        // act
+        
         var result = subjectUnderTest.GenerateWithStrength(policy =>
         {
             policy.Length = 20;
@@ -249,22 +310,25 @@ public class PasswordGeneratorTests
             policy.ExcludeAmbiguousCharacters = true;
         });
 
+        // assert
+        
         result.ShouldNotBeNull();
         result.Password.ShouldNotBeNullOrEmpty();
         result.Password.Length.ShouldBe(20);
-
-        // Entropy bits should be a positive number (entropy is calculated)
         result.EntropyBits.ShouldBeGreaterThan(0);
     }
 
     [Fact]
     public void GenerateWithStrength_WhenPolicyInvalid_ThrowsException()
     {
+        // arrange
+        
         var subjectUnderTest = new PasswordGenerator();
 
+        // act & assert
+        
         var exception = Should.Throw<PasswordGeneratorException>(() =>
         {
-            // Invalid policy length below minimum
             subjectUnderTest.GenerateWithStrength(policy => { policy.Length = 5; });
         });
 
@@ -272,12 +336,15 @@ public class PasswordGeneratorTests
     }
 
     [Fact]
-    public void GenerateWithStrength_IncludesAdditionalCharacters()
+    public void GenerateWithStrength_WhenAdditionalCharactersIncluded_ReturnsAsExpected()
     {
+        // arrange
+        
         var subjectUnderTest = new PasswordGenerator();
+        const string additionalChars = "åäöüß";
 
-        var additionalChars = "åäöüß";
-
+        // act
+        
         var result = subjectUnderTest.GenerateWithStrength(policy =>
         {
             policy.Length = 30;
@@ -288,19 +355,25 @@ public class PasswordGeneratorTests
             policy.AdditionalCharacters = additionalChars;
         });
 
+        // assert
+        
         result.Password.ShouldNotBeNullOrEmpty();
         result.Password.All(c => additionalChars.Contains(c)).ShouldBeTrue();
         result.EntropyBits.ShouldBeGreaterThan(0);
     }
 
     [Fact]
-    public void GenerateWithStrength_ContainsAllRequiredCharacterTypes()
+    public void GenerateWithStrength_WhenPolicyIsValid_ContainsAllRequiredCharacterTypes()
     {
+        // arrange
+        
         var subjectUnderTest = new PasswordGenerator();
 
+        // act
+        
         var result = subjectUnderTest.GenerateWithStrength(policy =>
         {
-            policy.Length = 40;
+            policy.Length = 1024;
             policy.RequireDigit = true;
             policy.RequireLowercase = true;
             policy.RequireUppercase = true;
@@ -308,11 +381,12 @@ public class PasswordGeneratorTests
             policy.SpecialCharacters = "!@#";
         });
 
-        var pwd = result.Password;
-
-        pwd.Any(char.IsDigit).ShouldBeTrue();
-        pwd.Any(char.IsLower).ShouldBeTrue();
-        pwd.Any(char.IsUpper).ShouldBeTrue();
-        pwd.Any(c => "!@#".Contains(c)).ShouldBeTrue();
+        // assert
+        
+        var password = result.Password;
+        password.Any(char.IsDigit).ShouldBeTrue();
+        password.Any(char.IsLower).ShouldBeTrue();
+        password.Any(char.IsUpper).ShouldBeTrue();
+        password.Any(c => "!@#".Contains(c)).ShouldBeTrue();
     }
 }
