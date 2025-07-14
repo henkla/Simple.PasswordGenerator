@@ -59,6 +59,11 @@ public class PasswordPolicy
     public string SpecialCharacters { get; set; } = "!@#$%^&*()-_=+[]{};:,.<>?";
 
     /// <summary>
+    /// Optional additional characters to include in the allowed character pool.
+    /// </summary>
+    public string AdditionalCharacters { get; set; } = string.Empty;
+    
+    /// <summary>
     /// Validates the current policy settings.
     /// Throws an exception if the policy is invalid.
     /// </summary>

@@ -47,6 +47,8 @@ public class PasswordGenerator : IPasswordGenerator
                 ? FilterAmbiguous(policy.SpecialCharacters, policy)
                 : string.Empty;
 
+            var additional = FilterAmbiguous(policy.AdditionalCharacters, policy);
+
             if (policy.RequireUppercase && upper.Length > 0)
             {
                 charCategories.Add(upper);
@@ -69,6 +71,12 @@ public class PasswordGenerator : IPasswordGenerator
             {
                 charCategories.Add(special);
                 requiredChars.Add(GetRandomChar(special));
+            }
+
+            if (!string.IsNullOrEmpty(additional))
+            {
+                charCategories.Add(additional);
+                // Not adding to requiredChars because these are optional characters
             }
 
             var allChars = string.Concat(charCategories);
@@ -107,6 +115,7 @@ public class PasswordGenerator : IPasswordGenerator
             config.SpecialCharacters = policyConfiguration.SpecialCharacters;
             config.ExcludeAmbiguousCharacters = policyConfiguration.ExcludeAmbiguousCharacters;
             config.AmbiguousCharacters = policyConfiguration.AmbiguousCharacters;
+            config.AdditionalCharacters = policyConfiguration.AdditionalCharacters;
         });
     }
 

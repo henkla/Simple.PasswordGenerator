@@ -147,8 +147,6 @@ Console.WriteLine($"Password from policy instance: {policyPassword}");
 
 ## 🐞 Known Issues & Limitations
 
-- No support yet for exclusion of ambiguous characters (e.g., 'O' vs '0')
-- No built-in localization or culture-specific character sets
 - Does not support password strength estimation or entropy reporting
 
 ---
