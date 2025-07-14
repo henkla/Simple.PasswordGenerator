@@ -10,6 +10,7 @@ public interface IPasswordGenerator
     string Generate(Action<PasswordPolicy>? policyConfiguration = null);
     string Generate(PasswordPolicy policyConfiguration);
     PasswordStrengthResult GenerateWithStrength(Action<PasswordPolicy>? policyConfiguration = null);
+    PasswordStrengthResult GenerateWithStrength(PasswordPolicy policyConfiguration);
 }
 
 /// <summary>
@@ -21,6 +22,12 @@ public class PasswordGenerator : IPasswordGenerator
     private const string LowerCaseSeed = "abcdefghijklmnopqrstuvwxyz";
     private const string DigitSeed = "0123456789";
 
+    /// <summary>
+    /// Generates a password as a string based on an optional configuration action that modifies the <see cref="PasswordPolicy"/>.
+    /// Throws <see cref="PasswordGeneratorException"/> if password generation fails due to invalid policy or other errors.
+    /// </summary>
+    /// <param name="policyConfiguration">An optional action to configure the password policy.</param>
+    /// <returns>A generated password string.</returns>
     public string Generate(Action<PasswordPolicy>? policyConfiguration = null)
     {
         try
@@ -102,6 +109,12 @@ public class PasswordGenerator : IPasswordGenerator
         }
     }
 
+    /// <summary>
+    /// Generates a password as a string based on a specified <see cref="PasswordPolicy"/> instance.
+    /// Throws <see cref="ArgumentNullException"/> if the policy is null.
+    /// </summary>
+    /// <param name="policyConfiguration">The password policy configuration to use.</param>
+    /// <returns>A generated password string.</returns>
     public string Generate(PasswordPolicy policyConfiguration)
     {
         ArgumentNullException.ThrowIfNull(policyConfiguration);
@@ -121,12 +134,12 @@ public class PasswordGenerator : IPasswordGenerator
     }
 
     /// <summary>
-    /// Generates a password based on an optional policy configuration and evaluates its strength.
-    /// Calculates password entropy using the size of the character set and password length,
-    /// then categorizes the password strength from VeryWeak to VeryStrong based on entropy thresholds.
-    /// Returns the generated password along with its entropy value and strength rating.
-    /// Throws a PasswordGeneratorException if no valid characters are available or if an error occurs.
+    /// Generates a password along with its strength evaluation based on an optional configuration action for <see cref="PasswordPolicy"/>.
+    /// Calculates entropy and classifies the password strength as VeryWeak to VeryStrong.
+    /// Throws <see cref="PasswordGeneratorException"/> if generation fails.
     /// </summary>
+    /// <param name="policyConfiguration">An optional action to configure the password policy.</param>
+    /// <returns>A <see cref="PasswordStrengthResult"/> containing the password, its entropy, and strength rating.</returns>
     public PasswordStrengthResult GenerateWithStrength(Action<PasswordPolicy>? policyConfiguration = null)
     {
         try
@@ -192,6 +205,30 @@ public class PasswordGenerator : IPasswordGenerator
         {
             throw new PasswordGeneratorException("An error occurred while generating password. See inner exception for further details.", e);
         }
+    }
+
+    /// <summary>
+    /// Generates a password and evaluates its strength based on a specified <see cref="PasswordPolicy"/> instance.
+    /// Throws <see cref="ArgumentNullException"/> if the policy is null.
+    /// </summary>
+    /// <param name="policyConfiguration">The password policy configuration to use.</param>
+    /// <returns>A <see cref="PasswordStrengthResult"/> containing the password, its entropy, and strength rating.</returns>
+    public PasswordStrengthResult GenerateWithStrength(PasswordPolicy policyConfiguration)
+    {
+        ArgumentNullException.ThrowIfNull(policyConfiguration);
+
+        return GenerateWithStrength(config =>
+        {
+            config.Length = policyConfiguration.Length;
+            config.RequireUppercase = policyConfiguration.RequireUppercase;
+            config.RequireLowercase = policyConfiguration.RequireLowercase;
+            config.RequireDigit = policyConfiguration.RequireDigit;
+            config.RequireSpecial = policyConfiguration.RequireSpecial;
+            config.SpecialCharacters = policyConfiguration.SpecialCharacters;
+            config.ExcludeAmbiguousCharacters = policyConfiguration.ExcludeAmbiguousCharacters;
+            config.AmbiguousCharacters = policyConfiguration.AmbiguousCharacters;
+            config.AdditionalCharacters = policyConfiguration.AdditionalCharacters;
+        });
     }
 
     private static char GetRandomChar(string chars)
