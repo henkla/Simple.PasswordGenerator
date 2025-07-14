@@ -31,11 +31,26 @@ public class PasswordPolicy
     public bool RequireDigit { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets a value indicating whether ambiguous characters should be excluded
+    /// from the generated password. Ambiguous characters include characters like
+    /// '0' (zero), 'O' (uppercase o), '1' (one), 'l' (lowercase L), and 'I' (uppercase i).
+    /// Default value: <c>false</c>.
+    /// </summary>
+    public bool ExcludeAmbiguousCharacters { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the set of characters considered ambiguous and excluded
+    /// from the generated password if <see cref="ExcludeAmbiguousCharacters"/> is <c>true</c>.
+    /// Default value: <c>1lI0O</c>.
+    /// </summary>
+    public string AmbiguousCharacters { get; set; } = "1lI0O";
+    
+    /// <summary>
     /// Gets or sets a value indicating whether the password must contain at least one special character.
     /// Default value: <c>true</c>.
     /// </summary>
     public bool RequireSpecial { get; set; } = true;
-
+    
     /// <summary>
     /// Gets or sets the set of special characters allowed in the password.
     /// Only used if <see cref="RequireSpecial"/> is true.
